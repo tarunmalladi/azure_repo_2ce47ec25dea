@@ -39,3 +39,33 @@ jobs:
         
       - name: Terraform Apply (Manual Approval Required)
         run: terraform apply tfplan
+          destroy:
+    name: "Terraform Destroy (Manual)"
+    runs-on: ubuntu-latest
+    needs: terraform  # Runs after the Terraform job
+    if: github.event_name == 'workflow_dispatch'
+    environment: production
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: latest
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan Destroy
+        run: terraform plan -destroy -out=tfplan-destroy
+
+      - name: Manual Approval for Terraform Destroy
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Terraform Destroy (Manual Approval Required)
+        run: terraform apply tfplan-destroy
+        shell: bash
+
