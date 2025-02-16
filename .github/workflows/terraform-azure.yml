@@ -52,7 +52,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: latest
+          terraform_version: 1.10.5
 
       - name: Terraform Init
         run: terraform init
@@ -62,9 +62,7 @@ jobs:
 
       - name: Manual Approval for Terraform Destroy
         uses: hmarr/auto-approve-action@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
+        
       - name: Terraform Destroy (Manual Approval Required)
         run: terraform apply tfplan-destroy
         shell: bash
