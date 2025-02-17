@@ -1,4 +1,4 @@
-name: "Terraform Azure Deployment"
+name: Azure Terraform Deployment
 
 on:
   push:
@@ -7,84 +7,36 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
-
-permissions:
-  id-token: write
-  contents: read
 
 jobs:
-  terraform-plan:
-    name: "Terraform Plan"
+  terraform:
+    name: 'Terraform Apply'
     runs-on: ubuntu-latest
 
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
     steps:
-      - name: "Checkout Repository"
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: "Set up Terraform"
+      - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.10.5
 
-      - name: "Azure Login"
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-
-      - name: "Terraform Init"
+      - name: Terraform Init
         run: terraform init
 
-      - name: "Terraform Format Check"
-        run: terraform fmt -check
-
-      - name: "Terraform Validate"
+      - name: Terraform Validate
         run: terraform validate
 
-      - name: "Terraform Plan"
+      - name: Terraform Plan
         run: terraform plan -out=tfplan
 
-      - name: "Save Terraform Plan"
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan
-          path: ./tfplan
-
-  manual-approval:
-    name: "Manual Approval"
-    needs: terraform-plan
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Approval Required"
-        run: echo "Please approve Terraform Apply in GitHub Actions UI."
-      - name: "Wait for Approval"
-        uses: hmarr/auto-approve-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  terraform-apply:
-    name: "Terraform Apply"
-    needs: manual-approval
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Checkout Repository"
-        uses: actions/checkout@v4
-
-      - name: "Azure Login"
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-
-      - name: "Download Terraform Plan"
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan
-
-      - name: "Terraform Apply (Manual Approval Required)"
-        run: terraform apply tfplan
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
