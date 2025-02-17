@@ -36,3 +36,12 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan
+        
+      - name: Check if tfplan file exists
+        run: |
+          if [ -f "tfplan" ]; then
+            echo "tfplan file exists."
+          else
+            echo "tfplan file does not exist."
+            exit 1
+          fi
