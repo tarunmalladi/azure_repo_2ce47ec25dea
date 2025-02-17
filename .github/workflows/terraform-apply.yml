@@ -27,4 +27,4 @@ jobs:
         run: terraform init
 
       - name: Terraform Apply
-        run: terraform apply terraform/plans/tfplan
+        run: terraform apply ./tfplan
